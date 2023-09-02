@@ -4,11 +4,14 @@ A demo project for doing threat analysis on syslog events.
 import logging
 import socketserver
 
-from log_taxonomy import identify_logtype
-from event_log_source import EventLogBase
+from document_container import DocumentContainer
+from log_taxonomy import parse_log
 
 LOG_FILE = 'kestrelpy_demo.log'
 HOST, PORT = "0.0.0.0", 514
+
+REPLAY_LOG = True
+EVENTS = DocumentContainer()
 
 logging.basicConfig(
         level=logging.INFO,
@@ -26,13 +29,24 @@ class SyslogUDPHandler(socketserver.BaseRequestHandler):
         msg: str = str(data)
         print(f"{self.client_address[0]} : {msg}")
 
-        event_type:type = identify_logtype(msg)
-        parsed_log: EventLogBase = event_type(msg)
-        print(parsed_log.get_fields())
-
+        doc = parse_log(msg)
+        EVENTS.register_document(doc)
+        print(EVENTS.get_events())
+        print('-----')
         logging.info(msg)
 
+def load_from_log() -> None:
+    """ Initialize the log server from a file. """
+    with open(f"logs/{LOG_FILE}", 'r', encoding='utf-8') as log:
+        for event in log:
+            doc = parse_log(event)
+            EVENTS.register_document(doc)
+
+    print(EVENTS.get_events())
+
 if __name__ == "__main__":
+    if REPLAY_LOG:
+        load_from_log()
     try:
         server = socketserver.UDPServer((HOST,PORT), SyslogUDPHandler)
         server.serve_forever(poll_interval=0.5)
