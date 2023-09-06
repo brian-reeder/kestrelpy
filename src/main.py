@@ -10,7 +10,7 @@ from log_taxonomy import parse_log
 LOG_FILE = 'kestrelpy_demo.log'
 HOST, PORT = "0.0.0.0", 514
 
-REPLAY_LOG = True
+REPLAY_LOG = False
 EVENTS = DocumentContainer()
 
 logging.basicConfig(
@@ -24,15 +24,12 @@ logging.basicConfig(
 class SyslogUDPHandler(socketserver.BaseRequestHandler):
     """ UDP/514 - Syslog implementation """
     def handle(self):
-        data = bytes.decode(self.request[0].strip())
+        data: str = bytes.decode(self.request[0].strip())
         #socket = self.request[1]
         msg: str = str(data)
-        print(f"{self.client_address[0]} : {msg}")
-
+        print(f"{self.client_address[0]}: {msg}")
         doc = parse_log(msg)
         EVENTS.register_document(doc)
-        print(EVENTS.get_events())
-        print('-----')
         logging.info(msg)
 
 def load_from_log() -> None:
@@ -41,8 +38,6 @@ def load_from_log() -> None:
         for event in log:
             doc = parse_log(event)
             EVENTS.register_document(doc)
-
-    print(EVENTS.get_events())
 
 if __name__ == "__main__":
     if REPLAY_LOG:
