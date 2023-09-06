@@ -14,7 +14,7 @@ def parse(event_log: str) -> dict:
     """ Parse structured Key=Value pair events into documents. """
     document: dict = generate_base_document(event_log)
     document['__type__'] = 'KeyValuePair'
-    for tok in [t.split('=') for t in [pairs for pairs in event_log.split('|')]]:
+    for tok in [t.split('=') for t in event_log.split('|')]:
         document[tok[0]] = tok[1] if tok[1] is not None else ''
 
     return document
